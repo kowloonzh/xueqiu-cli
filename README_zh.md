@@ -1,28 +1,26 @@
 # xueqiu-cli
 
-[中文文档](README_zh.md)
+`xueqiu-cli` 是一个用于查询雪球实时行情数据的 Go 命令行工具，同时也可以作为 Go 依赖库使用。
 
-`xueqiu-cli` is a small Go CLI and library for querying Xueqiu realtime quote data.
+支持能力：
 
-It supports:
+- 查询单个 symbol 或多个 symbols
+- 输出雪球上游接口的完整 JSON
+- 通过本地 Chrome 获取雪球 cookie
+- 支持 Chrome remote 模式，适合服务器无头浏览器场景
+- 可作为 Go 库使用：`github.com/kowloonzh/xueqiu-cli/xueqiu`
 
-- CLI queries for one symbol or multiple symbols
-- full upstream JSON output from Xueqiu
-- local Chrome mode for cookie acquisition
-- Chrome remote mode for server/headless-browser environments
-- Go library usage through `github.com/kowloonzh/xueqiu-cli/xueqiu`
+## CLI 使用
 
-## CLI
+### 下载二进制
 
-### Download Binary
-
-Prebuilt binaries are published from GitHub tags:
+预编译二进制会在 GitHub tag 发布时自动生成：
 
 ```text
 https://github.com/kowloonzh/xueqiu-cli/releases
 ```
 
-Choose the archive for your OS and CPU:
+根据操作系统和 CPU 架构选择对应文件：
 
 ```text
 xueqiu-cli_1.0.0_darwin_amd64.tar.gz
@@ -33,7 +31,7 @@ xueqiu-cli_1.0.0_windows_amd64.tar.gz
 xueqiu-cli_1.0.0_windows_arm64.tar.gz
 ```
 
-Linux amd64 example:
+Linux amd64 示例：
 
 ```bash
 curl -L -o xueqiu-cli.tar.gz \
@@ -43,7 +41,7 @@ tar -xzf xueqiu-cli.tar.gz
 sudo install -m 0755 xueqiu-cli_1.0.0_linux_amd64/xueqiu-cli /usr/local/bin/xueqiu-cli
 ```
 
-macOS Apple Silicon example:
+macOS Apple Silicon 示例：
 
 ```bash
 curl -L -o xueqiu-cli.tar.gz \
@@ -53,9 +51,9 @@ tar -xzf xueqiu-cli.tar.gz
 sudo install -m 0755 xueqiu-cli_1.0.0_darwin_arm64/xueqiu-cli /usr/local/bin/xueqiu-cli
 ```
 
-Each release also includes `checksums.txt` for SHA256 verification.
+每个 Release 也会包含 `checksums.txt`，可用于校验 SHA256。
 
-### Build From Source
+### 从源码构建
 
 ```bash
 git clone git@github.com:kowloonzh/xueqiu-cli.git
@@ -65,35 +63,35 @@ go test ./...
 go build -o xueqiu-cli .
 ```
 
-Optional install:
+可选安装：
 
 ```bash
 sudo install -m 0755 xueqiu-cli /usr/local/bin/xueqiu-cli
 ```
 
-### Commands
+### 命令说明
 
-Print version:
+查看版本：
 
 ```bash
 xueqiu-cli version
 ```
 
-Query one symbol:
+查询单个 symbol：
 
 ```bash
 xueqiu-cli stock SH513310
 ```
 
-Query multiple symbols:
+查询多个 symbols：
 
 ```bash
 xueqiu-cli stocks SH513310,SH000001
 ```
 
-Output is JSON. `stock` returns one full Xueqiu API response object. `stocks` returns an array of full response objects.
+输出格式是 JSON。`stock` 返回一个完整雪球接口响应对象，`stocks` 返回完整响应对象数组。
 
-Common ETF fields are under `data.quote`, for example:
+ETF 常用字段在 `data.quote` 下，例如：
 
 ```text
 data.quote.current
@@ -104,65 +102,63 @@ data.quote.acc_unit_nav
 data.quote.market_capital
 ```
 
-See [docs/xueqiu-quote-api.md](docs/xueqiu-quote-api.md) for a field mapping between Xueqiu page labels and JSON fields.
+页面展示字段和 JSON 字段的对应关系见 [docs/xueqiu-quote-api.md](docs/xueqiu-quote-api.md)。
 
-### Chrome Modes
+### Chrome 模式
 
-The Xueqiu quote API requires a valid Xueqiu cookie. The CLI gets that cookie through Chrome.
+雪球行情接口需要有效的雪球 cookie。CLI 会通过 Chrome 获取 cookie 后再请求行情接口。
 
-Default mode starts a local Chrome instance:
+默认模式会启动本地 Chrome：
 
 ```bash
 xueqiu-cli stock SH513310
 ```
 
-Remote mode connects to an existing Chrome DevTools endpoint:
+remote 模式会连接已有的 Chrome DevTools endpoint：
 
 ```bash
 xueqiu-cli --chrome-remote-url=http://127.0.0.1:9222 stock SH513310
 ```
 
-This is useful on servers where you want to run a headless browser separately.
-
-Start a headless Chrome DevTools endpoint with Docker:
+这个模式适合在服务器上运行无头浏览器。可以用 Docker 启动 headless Chrome：
 
 ```bash
 docker run -d -p 9222:9222 --rm --name headless-shell chromedp/headless-shell
 ```
 
-Check that the endpoint is usable:
+确认 endpoint 可用：
 
 ```bash
 curl http://127.0.0.1:9222/json/version
 ```
 
-Then run:
+然后运行：
 
 ```bash
 xueqiu-cli --chrome-remote-url=http://127.0.0.1:9222 stock SH513310
 ```
 
-Stop the headless browser:
+停止无头浏览器：
 
 ```bash
 docker stop headless-shell
 ```
 
-## Go Library
+## Go 库使用
 
-Install:
+安装依赖：
 
 ```bash
 go get github.com/kowloonzh/xueqiu-cli
 ```
 
-Import the public subpackage:
+引入公共子包：
 
 ```go
 import "github.com/kowloonzh/xueqiu-cli/xueqiu"
 ```
 
-### Query One Symbol
+### 查询单个 symbol
 
 ```go
 package main
@@ -193,7 +189,7 @@ func main() {
 }
 ```
 
-### Query Multiple Symbols
+### 查询多个 symbols
 
 ```go
 symbols, err := xueqiu.ParseSymbols("SH513310,SH000001")
@@ -207,7 +203,7 @@ if err != nil {
 }
 ```
 
-### Library Chrome Remote Mode
+### Go 库中的 Chrome remote 模式
 
 ```go
 provider := xueqiu.NewChromeCookieProvider(xueqiu.ChromeConfig{
@@ -217,13 +213,13 @@ provider := xueqiu.NewChromeCookieProvider(xueqiu.ChromeConfig{
 client := xueqiu.NewClient(http.DefaultClient, provider)
 ```
 
-`Client.Quote` returns `xueqiu.Quote`, which is:
+`Client.Quote` 返回 `xueqiu.Quote`：
 
 ```go
 type Quote map[string]any
 ```
 
-The map contains the full upstream Xueqiu response:
+这个 map 保留雪球上游接口的完整响应：
 
 ```text
 data.market
@@ -234,17 +230,18 @@ error_code
 error_description
 ```
 
-Numeric fields are decoded as `json.Number` to avoid precision loss for large fields such as `amount`, `volume`, and timestamps.
+数值字段会解码成 `json.Number`，避免 `amount`、`volume`、时间戳等大数字被 `float64` 转换导致精度损失。
 
-More library examples are in [docs/library-usage.md](docs/library-usage.md).
+更多 Go 库示例见 [docs/library-usage.md](docs/library-usage.md)。
 
-## Release
+## 发布
 
-Pushing a tag builds and publishes release binaries automatically:
+推送 tag 后会自动构建并发布二进制：
 
 ```bash
 git tag 1.0.0
 git push origin 1.0.0
 ```
 
-The workflow is defined in [.github/workflows/release.yml](.github/workflows/release.yml).
+workflow 定义在 [.github/workflows/release.yml](.github/workflows/release.yml)。
+
