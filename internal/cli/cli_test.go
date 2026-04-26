@@ -115,3 +115,24 @@ func TestChromeRemoteURLSelectsRemoteMode(t *testing.T) {
 		t.Fatalf("ChromeRemoteURL = %q", got.ChromeRemoteURL)
 	}
 }
+
+func TestVersionCommandPrintsVersionWithoutCreatingQuoteService(t *testing.T) {
+	var out bytes.Buffer
+	serviceCreated := false
+	cmd := newRootCommand(&out, func(Config) QuoteService {
+		serviceCreated = true
+		return &fakeQuoteService{}
+	})
+	cmd.SetArgs([]string{"version"})
+
+	if err := cmd.Execute(); err != nil {
+		t.Fatalf("Execute returned error: %v", err)
+	}
+
+	if got := out.String(); got != "1.0.0\n" {
+		t.Fatalf("version output = %q", got)
+	}
+	if serviceCreated {
+		t.Fatal("version command created quote service")
+	}
+}

@@ -16,6 +16,8 @@ type Config struct {
 	ChromeRemoteURL string
 }
 
+const Version = "1.0.0"
+
 type QuoteService interface {
 	Quote(context.Context, string) (xueqiu.Quote, error)
 	Quotes(context.Context, []string) ([]xueqiu.Quote, error)
@@ -55,6 +57,16 @@ func newRootCommand(out io.Writer, serviceFactory func(Config) QuoteService) *co
 		SilenceErrors: true,
 	}
 	cmd.PersistentFlags().StringVar(&config.ChromeRemoteURL, "chrome-remote-url", "", "Chrome remote debugging URL. Empty means local Chrome mode.")
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "version",
+		Short: "Print version",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			_, err := fmt.Fprintln(out, Version)
+			return err
+		},
+	})
 
 	cmd.AddCommand(&cobra.Command{
 		Use:   "stock <symbol>",
