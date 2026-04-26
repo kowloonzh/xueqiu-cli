@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release binaries
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build release artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${GITHUB_REF_NAME}"
+          mkdir -p dist
+
+          platforms=(
+            "darwin/amd64"
+            "darwin/arm64"
+            "linux/amd64"
+            "linux/arm64"
+            "windows/amd64"
+            "windows/arm64"
+          )
+
+          for platform in "${platforms[@]}"; do
+            IFS=/ read -r goos goarch <<< "${platform}"
+            artifact_name="xueqiu-cli_${version}_${goos}_${goarch}"
+            artifact_dir="dist/${artifact_name}"
+            binary_path="${artifact_dir}/xueqiu-cli"
+
+            if [[ "${goos}" == "windows" ]]; then
+              binary_path="${binary_path}.exe"
+            fi
+
+            mkdir -p "${artifact_dir}"
+            CGO_ENABLED=0 GOOS="${goos}" GOARCH="${goarch}" \
+              go build -trimpath -ldflags="-s -w" -o "${binary_path}" .
+
+            tar -C dist -czf "dist/${artifact_name}.tar.gz" "${artifact_name}"
+            rm -rf "${artifact_dir}"
+          done
+
+          (cd dist && sha256sum *.tar.gz > checksums.txt)
+
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-artifacts
+          path: dist/*
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME}"
+          if gh release view "${tag}" >/dev/null 2>&1; then
+            gh release upload "${tag}" dist/* --clobber
+          else
+            gh release create "${tag}" dist/* \
+              --title "${tag}" \
+              --generate-notes \
+              --verify-tag
+          fi
