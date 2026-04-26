@@ -1,0 +1,4 @@
+xueqiu-cli
+*.test
+*.out
+.DS_Store
